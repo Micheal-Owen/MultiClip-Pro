@@ -66,6 +66,12 @@ npm run build
 - Chrome Extension APIs
 - Vite
 
+## Author
+
+Created by Owen
+
 ## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
  2024 MultiClip Pro. All rights reserved.
