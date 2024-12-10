@@ -1,156 +1,136 @@
 <template>
-  <div class="container p-4 min-w-[450px] min-h-[600px] transition-colors duration-200"
+  <div class="flex flex-col min-w-[450px] min-h-[600px] transition-colors duration-200"
        :class="isDarkMode ? 'bg-gray-900' : 'bg-gray-50'">
-    <!-- Header -->
-    <header class="flex justify-between items-center mb-6 pb-4" 
-            :class="isDarkMode ? 'border-gray-700' : 'border-gray-200'">
-      <div>
-        <h1 class="text-2xl font-bold" :class="isDarkMode ? 'text-white' : 'text-gray-800'">
+    <!-- Fixed Header -->
+    <header class="sticky top-0 z-10 px-6 py-4 shadow-md"
+            :class="isDarkMode ? 'bg-gray-800' : 'bg-blue-600'">
+      <div class="flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-white">
           MultiClip Pro
         </h1>
-        <p class="text-sm" :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'">
-          Your Enhanced Clipboard Manager
-        </p>
+        
+        <!-- Settings Button -->
+        <router-link to="/settings" 
+                    class="p-2 rounded-full transition-colors text-white hover:bg-white/10">
+          <span class="material-icons text-xl">settings</span>
+        </router-link>
       </div>
-      
-      <!-- Theme Toggle -->
-      <button @click="toggleTheme" 
-              class="p-2 rounded-full transition-colors"
-              :class="isDarkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-200'">
-        <span class="material-icons text-xl" :class="isDarkMode ? 'text-gray-400' : 'text-gray-600'">
-          {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
-        </span>
-      </button>
     </header>
 
-    <!-- Clips List -->
-    <div class="space-y-2">
-      <div v-for="(clip, index) in clips" 
-           :key="clip.timestamp" 
-           class="group p-4 rounded-lg transition-all relative"
-           :class="isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:bg-gray-50'">
-        <!-- Divider line except for last item -->
-        <div v-if="index < clips.length - 1" 
-             class="absolute bottom-0 left-4 right-4 h-px"
-             :class="isDarkMode ? 'bg-gray-700' : 'bg-gray-200'">
-        </div>
-        
-        <!-- Clip Content -->
-        <div class="flex justify-between items-start gap-4">
-          <p class="line-clamp-2 flex-grow text-sm"
-             :class="isDarkMode ? 'text-gray-300' : 'text-gray-800'">
-            {{ clip.text }}
-          </p>
-          
-          <!-- Action Buttons -->
-          <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button @click="copyToClipboard(clip.text)" 
-                    class="p-1.5 rounded transition-colors"
-                    :class="isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-blue-400' : 'hover:bg-gray-100 text-gray-500 hover:text-blue-600'">
-              <span class="material-icons text-lg">content_copy</span>
-            </button>
-            <button @click="deleteClip(clip.timestamp)"
-                    class="p-1.5 rounded transition-colors"
-                    :class="isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-400' : 'hover:bg-gray-100 text-gray-500 hover:text-red-600'">
-              <span class="material-icons text-lg">delete</span>
-            </button>
+    <!-- Main Content -->
+    <main class="flex-grow p-6 overflow-y-auto">
+      <router-view v-if="$route.path === '/settings'" />
+      
+      <!-- Clips List (show only on home page) -->
+      <div v-else class="space-y-3">
+        <div v-for="(clip, index) in clips" 
+             :key="clip.timestamp" 
+             class="group p-4 rounded-lg transition-all relative"
+             :class="isDarkMode ? 'bg-gray-800 hover:bg-gray-750' : 'bg-white hover:bg-gray-50'">
+          <!-- Clip Content -->
+          <div class="flex justify-between items-start gap-4">
+            <p class="line-clamp-2 flex-grow text-sm"
+               :class="isDarkMode ? 'text-gray-300' : 'text-gray-800'">
+              {{ clip.text }}
+            </p>
+            
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button @click="copyToClipboard(clip.text)" 
+                      class="p-1.5 rounded transition-colors"
+                      :class="isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-blue-400' : 'hover:bg-gray-100 text-gray-500 hover:text-blue-600'">
+                <span class="material-icons text-lg">content_copy</span>
+              </button>
+              <button @click="deleteClip(clip.timestamp)"
+                      class="p-1.5 rounded transition-colors"
+                      :class="isDarkMode ? 'hover:bg-gray-700 text-gray-400 hover:text-red-400' : 'hover:bg-gray-100 text-gray-500 hover:text-red-600'">
+                <span class="material-icons text-lg">delete</span>
+              </button>
+            </div>
           </div>
+          
+          <!-- Timestamp -->
+          <p class="text-xs mt-2" :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
+            {{ formatTimestamp(clip.timestamp) }}
+          </p>
         </div>
-        
-        <!-- Timestamp -->
-        <span class="text-xs mt-2 block"
-              :class="isDarkMode ? 'text-gray-500' : 'text-gray-400'">
-          {{ formatTimestamp(clip.timestamp) }}
-        </span>
       </div>
-    </div>
+    </main>
 
-    <!-- Empty State -->
-    <div v-if="clips.length === 0" 
-         class="text-center py-10"
-         :class="isDarkMode ? 'text-gray-400' : 'text-gray-500'">
-      <span class="material-icons text-4xl mb-2">content_paste</span>
-      <p>No clips yet. Copy some text to get started!</p>
-    </div>
-
-    <!-- Success Notification -->
-    <div v-if="showNotification"
-         class="fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white bg-green-500 transition-all duration-200"
-         :class="{ 'opacity-0': !showNotification }">
-      Copied to clipboard!
-    </div>
+    <!-- Fixed Footer -->
+    <footer class="px-6 py-3 text-center text-sm shadow-md"
+            :class="isDarkMode ? 'bg-gray-800 text-white' : 'bg-blue-600 text-white'">
+      Created by Owen Maina
+    </footer>
   </div>
 </template>
 
 <script>
+import { onMounted } from 'vue'
+import useThemeStore from './stores/theme'
+
 export default {
   name: 'App',
   data() {
     return {
       clips: [],
-      isDarkMode: false,
-      showNotification: false
+      isDarkMode: false
     }
   },
   methods: {
     async loadClips() {
-      try {
-        const { clips = [] } = await chrome.storage.local.get('clips');
-        this.clips = clips;
-      } catch (error) {
-        console.error('Error loading clips:', error);
-      }
+      const { clips = [] } = await chrome.storage.local.get('clips');
+      this.clips = clips;
     },
     async copyToClipboard(text) {
       try {
         await navigator.clipboard.writeText(text);
-        this.showNotification = true;
-        setTimeout(() => {
-          this.showNotification = false;
-        }, 2000);
-      } catch (error) {
-        console.error('Error copying to clipboard:', error);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
       }
     },
     async deleteClip(timestamp) {
-      try {
-        const updatedClips = this.clips.filter(clip => clip.timestamp !== timestamp);
-        await chrome.storage.local.set({ clips: updatedClips });
-        this.clips = updatedClips;
-      } catch (error) {
-        console.error('Error deleting clip:', error);
-      }
+      this.clips = this.clips.filter(clip => clip.timestamp !== timestamp);
+      await chrome.storage.local.set({ clips: this.clips });
     },
     formatTimestamp(timestamp) {
       const date = new Date(timestamp);
       const now = new Date();
       const diffInHours = (now - date) / (1000 * 60 * 60);
-
+      
       if (diffInHours < 24) {
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      } else if (diffInHours < 48) {
-        return 'Yesterday';
+        return date.toLocaleTimeString();
       } else {
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+        return date.toLocaleDateString();
       }
-    },
-    toggleTheme() {
-      this.isDarkMode = !this.isDarkMode;
-      chrome.storage.local.set({ isDarkMode: this.isDarkMode });
+    }
+  },
+  setup() {
+    const themeStore = useThemeStore();
+    
+    onMounted(() => {
+      // Initialize theme from localStorage
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      themeStore.setTheme(savedTheme);
+    });
+
+    return {
+      themeStore
     }
   },
   async mounted() {
-    // Load dark mode preference
+    // Load dark mode preference and clips
     const { isDarkMode = false } = await chrome.storage.local.get('isDarkMode');
     this.isDarkMode = isDarkMode;
-
-    // Load clips
-    this.loadClips();
+    await this.loadClips();
 
     // Listen for storage changes
     chrome.storage.onChanged.addListener((changes) => {
       if (changes.clips) {
         this.clips = changes.clips.newValue || [];
+      }
+      if (changes.isDarkMode) {
+        this.isDarkMode = changes.isDarkMode.newValue;
       }
     });
   }
@@ -162,22 +142,25 @@ export default {
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Smooth transitions */
-.transition-all {
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* Custom hover state for dark mode */
 .bg-gray-750 {
   background-color: #2d374d;
+}
+
+/* Custom scrollbar for the main content */
+main::-webkit-scrollbar {
+  width: 8px;
+}
+
+main::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+main::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 4px;
+}
+
+main::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
 }
 </style>
